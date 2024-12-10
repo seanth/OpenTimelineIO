@@ -2,13 +2,13 @@
 # opentimelineio/CMakeLists.txt
 
 set(OPENTIMELINEIO_HEADER_FILES
-    any.h
     anyDictionary.h
     anyVector.h
     clip.h
     composable.h
     composition.h
     deserialization.h
+    algo/editAlgorithm.h
     effect.h
     errorStatus.h
     externalReference.h
@@ -21,7 +21,6 @@ set(OPENTIMELINEIO_HEADER_FILES
     marker.h
     mediaReference.h
     missingReference.h
-    optional.h
     safely_typed_any.h
     serializableCollection.h
     serializableObject.h
@@ -44,6 +43,7 @@ add_library(opentimelineio ${OTIO_SHARED_OR_STATIC_LIB}
     composable.cpp
     composition.cpp
     deserialization.cpp
+    algo/editAlgorithm.cpp
     effect.cpp
     errorStatus.cpp
     externalReference.cpp
@@ -81,7 +81,6 @@ target_include_directories(opentimelineio
     PRIVATE       "${IMATH_INCLUDES}"
                   "${PROJECT_SOURCE_DIR}/src"
                   "${PROJECT_SOURCE_DIR}/src/deps"
-                  "${PROJECT_SOURCE_DIR}/src/deps/optional-lite/include"
                   "${PROJECT_SOURCE_DIR}/src/deps/rapidjson/include"
                   "${IMATH_INCLUDES}")
 
@@ -118,13 +117,30 @@ if(OTIO_CXX_INSTALL)
     endif()
 
     install(TARGETS opentimelineio
-           EXPORT OpenTimelineIOConfig
+           EXPORT OpenTimelineIOTargets
            INCLUDES DESTINATION "${OPENTIMELINEIO_INCLUDES}"
            ARCHIVE DESTINATION "${OTIO_RESOLVED_CXX_DYLIB_INSTALL_DIR}"
            LIBRARY DESTINATION "${OTIO_RESOLVED_CXX_DYLIB_INSTALL_DIR}"
            RUNTIME DESTINATION "${OTIO_RESOLVED_CXX_DYLIB_INSTALL_DIR}")
 
-    install(EXPORT OpenTimelineIOConfig
+    install(EXPORT OpenTimelineIOTargets
            DESTINATION "${OTIO_RESOLVED_CXX_INSTALL_DIR}/share/opentimelineio"
            NAMESPACE OTIO:: )
+
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/OpenTimelineIOConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/OpenTimelineIOConfig.cmake
+        INSTALL_DESTINATION
+            ${OTIO_RESOLVED_CXX_INSTALL_DIR}/share/opentimelineio
+        NO_SET_AND_CHECK_MACRO
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+    )
+
+    install(
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/OpenTimelineIOConfig.cmake
+        DESTINATION
+            ${OTIO_RESOLVED_CXX_INSTALL_DIR}/share/opentimelineio
+    )
 endif()

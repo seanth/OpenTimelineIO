@@ -67,11 +67,13 @@ To provide interoperability with other file formats or applications lacking a
 native integration, the opentimelineio community has built a number of python
 adapter plugins. This includes Final Cut Pro XML, AAF, CMX 3600 EDL, and more.
 
+**Note: for releases after v0.16, the [OpenTimelineIO PyPI package](https://pypi.org/project/OpenTimelineIO/) will only include the core libraries and file formats. Users that need the full set of adapter plugins should use the [OpenTimelineIO-Plugins PyPI Package](https://pypi.org/project/OpenTimelineIO-Plugins/). Each OpenTimelineIO release will have a matching OpenTimelineIO-Plugins release.**
+
+For more information: https://github.com/AcademySoftwareFoundation/OpenTimelineIO/issues/1386
+
 For more information about this, including supported formats, see: https://opentimelineio.readthedocs.io/en/latest/tutorials/adapters.html
 
-Other Plugins
--------------
-
+All adapters except the native `.otio`, `.otioz` and `.otiod` have been relocated to separate repositories under the OpenTimelineIO organization located here: https://github.com/OpenTimelineIO
 The OTIO python bindings also support several other kinds of plugins, for more information see:
 
 * [Media Linkers](https://opentimelineio.readthedocs.io/en/latest/tutorials/write-a-media-linker.html) - Generate media references to local media according to your local conventions.
@@ -110,7 +112,7 @@ main()
         )
     );
     const std::vector<otio::SerializableObject::Retainer<otio::Clip>> clips = (
-            tl->clip_if()
+            tl->find_clips()
     );
     for (const auto& cl : clips)
     {
@@ -127,7 +129,7 @@ Python:
 import opentimelineio as otio
 
 timeline = otio.adapters.read_from_file("foo.aaf")
-for clip in timeline.clip_if():
+for clip in timeline.find_clips():
   print(clip.name, clip.duration())
 ```
 

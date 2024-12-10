@@ -34,39 +34,39 @@ public:
     using Parent = Composition;
 
     Track(
-        std::string const&         name         = std::string(),
-        optional<TimeRange> const& source_range = nullopt,
-        std::string const&                      = Kind::video,
-        AnyDictionary const& metadata           = AnyDictionary());
+        std::string const&              name         = std::string(),
+        std::optional<TimeRange> const& source_range = std::nullopt,
+        std::string const&              kind         = Kind::video,
+        AnyDictionary const&            metadata     = AnyDictionary());
 
     std::string kind() const noexcept { return _kind; }
 
     void set_kind(std::string const& kind) { _kind = kind; }
 
-    virtual TimeRange range_of_child_at_index(
+    TimeRange range_of_child_at_index(
         int          index,
-        ErrorStatus* error_status = nullptr) const;
-    virtual TimeRange trimmed_range_of_child_at_index(
+        ErrorStatus* error_status = nullptr) const override;
+    TimeRange trimmed_range_of_child_at_index(
         int          index,
-        ErrorStatus* error_status = nullptr) const;
-    virtual TimeRange
-    available_range(ErrorStatus* error_status = nullptr) const;
+        ErrorStatus* error_status = nullptr) const override;
+    TimeRange
+    available_range(ErrorStatus* error_status = nullptr) const override;
 
-    virtual std::pair<optional<RationalTime>, optional<RationalTime>>
+    std::pair<std::optional<RationalTime>, std::optional<RationalTime>>
     handles_of_child(
         Composable const* child,
-        ErrorStatus*      error_status = nullptr) const;
+        ErrorStatus*      error_status = nullptr) const override;
 
     std::pair<Retainer<Composable>, Retainer<Composable>> neighbors_of(
         Composable const* item,
         ErrorStatus*      error_status = nullptr,
         NeighborGapPolicy insert_gap   = NeighborGapPolicy::never) const;
 
-    virtual std::map<Composable*, TimeRange>
-    range_of_all_children(ErrorStatus* error_status = nullptr) const;
+    std::map<Composable*, TimeRange>
+    range_of_all_children(ErrorStatus* error_status = nullptr) const override;
 
-    optional<Imath::Box2d>
-    available_image_bounds(ErrorStatus* error_status) const;
+    std::optional<IMATH_NAMESPACE::Box2d>
+    available_image_bounds(ErrorStatus* error_status) const override;
 
     // Find child clips.
     //
@@ -74,16 +74,17 @@ public:
     //
     // The search is recursive unless shallow_search is set to true.
     std::vector<Retainer<Clip>> find_clips(
-        ErrorStatus*               error_status   = nullptr,
-        optional<TimeRange> const& search_range   = nullopt,
-        bool                       shallow_search = false) const;
+        ErrorStatus*                    error_status   = nullptr,
+        std::optional<TimeRange> const& search_range   = std::nullopt,
+        bool                            shallow_search = false) const;
 
 protected:
     virtual ~Track();
-    virtual std::string composition_kind() const;
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    std::string composition_kind() const override;
+
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     std::string _kind;

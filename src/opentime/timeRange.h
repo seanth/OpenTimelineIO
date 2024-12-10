@@ -47,10 +47,6 @@ public:
         , _duration{ duration }
     {}
 
-    constexpr TimeRange(TimeRange const&) noexcept = default;
-
-    TimeRange& operator=(TimeRange const&) noexcept = default;
-
     constexpr RationalTime start_time() const noexcept { return _start_time; }
 
     constexpr RationalTime duration() const noexcept { return _duration; }
@@ -61,8 +57,8 @@ public:
 
         if ((et - _start_time.rescaled_to(_duration))._value > 1)
         {
-            return _duration._value != floor(_duration._value)
-                       ? et._floor()
+            return _duration._value != std::floor(_duration._value)
+                       ? et.floor()
                        : et - RationalTime(1, _duration._rate);
         }
         else
@@ -388,13 +384,13 @@ private:
     RationalTime _start_time, _duration;
     friend class TimeTransform;
 
-    inline constexpr bool
+    constexpr bool
     greater_than(double lhs, double rhs, double epsilon) const noexcept
     {
         return lhs - rhs >= epsilon;
     }
 
-    inline constexpr bool
+    constexpr bool
     lesser_than(double lhs, double rhs, double epsilon) const noexcept
     {
         return rhs - lhs >= epsilon;

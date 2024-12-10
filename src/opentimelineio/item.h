@@ -6,7 +6,6 @@
 #include "opentime/timeRange.h"
 #include "opentimelineio/composable.h"
 #include "opentimelineio/errorStatus.h"
-#include "opentimelineio/optional.h"
 #include "opentimelineio/version.h"
 
 namespace opentimelineio { namespace OPENTIMELINEIO_VERSION {
@@ -26,23 +25,26 @@ public:
     using Parent = Composable;
 
     Item(
-        std::string const&          name         = std::string(),
-        optional<TimeRange> const&  source_range = nullopt,
-        AnyDictionary const&        metadata     = AnyDictionary(),
-        std::vector<Effect*> const& effects      = std::vector<Effect*>(),
-        std::vector<Marker*> const& markers      = std::vector<Marker*>(),
-        bool                        enabled      = true);
+        std::string const&              name         = std::string(),
+        std::optional<TimeRange> const& source_range = std::nullopt,
+        AnyDictionary const&            metadata     = AnyDictionary(),
+        std::vector<Effect*> const&     effects      = std::vector<Effect*>(),
+        std::vector<Marker*> const&     markers      = std::vector<Marker*>(),
+        bool                            enabled      = true);
 
-    virtual bool visible() const;
-    virtual bool overlapping() const;
+    bool visible() const override;
+    bool overlapping() const override;
 
     bool enabled() const { return _enabled; };
 
     void set_enabled(bool enabled) { _enabled = enabled; }
 
-    optional<TimeRange> source_range() const noexcept { return _source_range; }
+    std::optional<TimeRange> source_range() const noexcept
+    {
+        return _source_range;
+    }
 
-    void set_source_range(optional<TimeRange> const& source_range)
+    void set_source_range(std::optional<TimeRange> const& source_range)
     {
         _source_range = source_range;
     }
@@ -61,7 +63,7 @@ public:
         return _markers;
     }
 
-    virtual RationalTime duration(ErrorStatus* error_status = nullptr) const override;
+    RationalTime duration(ErrorStatus* error_status = nullptr) const override;
 
     virtual TimeRange
     available_range(ErrorStatus* error_status = nullptr) const;
@@ -73,7 +75,7 @@ public:
 
     TimeRange visible_range(ErrorStatus* error_status = nullptr) const;
 
-    optional<TimeRange>
+    std::optional<TimeRange>
     trimmed_range_in_parent(ErrorStatus* error_status = nullptr) const;
 
     TimeRange range_in_parent(ErrorStatus* error_status = nullptr) const;
@@ -91,11 +93,11 @@ public:
 protected:
     virtual ~Item();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
-    optional<TimeRange>           _source_range;
+    std::optional<TimeRange>      _source_range;
     std::vector<Retainer<Effect>> _effects;
     std::vector<Retainer<Marker>> _markers;
     bool                          _enabled;

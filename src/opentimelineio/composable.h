@@ -34,7 +34,7 @@ public:
 
     virtual RationalTime duration(ErrorStatus* error_status = nullptr) const;
 
-    virtual optional<Imath::Box2d>
+    virtual std::optional<IMATH_NAMESPACE::Box2d>
     available_image_bounds(ErrorStatus* error_status) const;
 
 protected:
@@ -48,8 +48,8 @@ protected:
 
     virtual ~Composable();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     Composition* _parent;

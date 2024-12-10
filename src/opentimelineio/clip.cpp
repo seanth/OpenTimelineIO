@@ -9,12 +9,14 @@ namespace opentimelineio { namespace OPENTIMELINEIO_VERSION {
 char constexpr Clip::default_media_key[];
 
 Clip::Clip(
-    std::string const&         name,
-    MediaReference*            media_reference,
-    optional<TimeRange> const& source_range,
-    AnyDictionary const&       metadata,
-    std::string const&         active_media_reference_key)
-    : Parent{ name, source_range, metadata }
+    std::string const&              name,
+    MediaReference*                 media_reference,
+    std::optional<TimeRange> const& source_range,
+    AnyDictionary const&            metadata,
+    std::vector<Effect*> const&     effects,
+    std::vector<Marker*> const&     markers,
+    std::string const&              active_media_reference_key)
+    : Parent{ name, source_range, metadata, effects, markers }
     , _active_media_reference_key(active_media_reference_key)
 {
     set_media_reference(media_reference);
@@ -184,7 +186,7 @@ Clip::available_range(ErrorStatus* error_status) const
     return active_media->available_range().value();
 }
 
-optional<Imath::Box2d>
+std::optional<IMATH_NAMESPACE::Box2d>
 Clip::available_image_bounds(ErrorStatus* error_status) const
 {
     auto active_media = media_reference();
@@ -194,7 +196,7 @@ Clip::available_image_bounds(ErrorStatus* error_status) const
             ErrorStatus::CANNOT_COMPUTE_BOUNDS,
             "No image bounds set on clip",
             this);
-        return optional<Imath::Box2d>();
+        return std::optional<IMATH_NAMESPACE::Box2d>();
     }
 
     if (!active_media->available_image_bounds())
@@ -203,7 +205,7 @@ Clip::available_image_bounds(ErrorStatus* error_status) const
             ErrorStatus::CANNOT_COMPUTE_BOUNDS,
             "No image bounds set on media reference on clip",
             this);
-        return optional<Imath::Box2d>();
+        return std::optional<IMATH_NAMESPACE::Box2d>();
     }
 
     return active_media->available_image_bounds();

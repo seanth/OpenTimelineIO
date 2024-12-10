@@ -32,13 +32,25 @@ def main():
 
     args = parse_arguments()
 
+    # Special case option, which skips all the other phases
+
+    if args.list_versions:
+        print("Available versions for --downgrade FAMILY:VERSION")
+        for family, mapping in otio.versioning.full_map().items():
+            for label in mapping.keys():
+                print(f"  {family}:{label}")
+        return
+
     # Phase 1: Input...
 
     # Most of this function will operate on this list of timelines.
     # Often there will be just one, but this tool in general enough
     # to operate on several. This is essential when the --stack or
     # --concatenate arguments are used.
-    timelines = read_inputs(args.input)
+    if args.input:
+        timelines = read_inputs(args.input)
+    else:
+        timelines = []
 
     # Phase 2: Filter (remove stuff)...
 
@@ -100,7 +112,12 @@ def main():
         for timeline in timelines:
             copy_media_to_folder(timeline, args.copy_media_to_folder)
 
-    # Phase 6: Redaction
+    # Phase 6: Remove/Redaction
+
+    if args.remove_metadata_key:
+        for timeline in timelines:
+            for key in args.remove_metadata_key:
+                remove_metadata_key(timeline, key)
 
     if args.redact:
         for timeline in timelines:
@@ -120,7 +137,8 @@ def main():
                         args.list_media or
                         args.verify_media or
                         args.list_tracks or
-                        args.list_markers)
+                        args.list_markers or
+                        args.verify_ranges)
     if should_summarize:
         for timeline in timelines:
             summarize_timeline(
@@ -129,9 +147,17 @@ def main():
                 args.list_media,
                 args.verify_media,
                 args.list_markers,
+                args.verify_ranges,
                 timeline)
 
     # Final Phase: Output
+
+    if args.downgrade:
+        if ":" in args.downgrade:
+            label = args.downgrade
+        else:
+            label = "OTIO_CORE:" + args.downgrade
+        os.environ["OTIO_DEFAULT_TARGET_VERSION_FAMILY_LABEL"] = label
 
     if args.output:
         # Gather all of the timelines under one OTIO object
@@ -175,20 +201,23 @@ This tool works in phases, as follows:
     If specified, the --copy-media-to-folder option, will copy or download
     all linked media, and relink the OTIO to reference the local copies.
 
-5. Redact
-    If specified, the --redact option, will remove all metadata and rename all
+5. Remove/Redact
+    The --remove-metadata-key option allows you to remove a specific piece of
+    metadata from all objects.
+    If specified, the --redact option, will remove ALL metadata and rename all
     objects in the OTIO with generic names (e.g. "Track 1", "Clip 17", etc.)
 
 6. Inspect
     Options such as --stats, --list-clips, --list-tracks, --list-media,
-    --verify-media, --list-markers, and --inspect will examine the OTIO and
-    print information to standard output.
+    --verify-media, --list-markers, --verify-ranges, and --inspect
+    will examine the OTIO and print information to standard output.
 
 7. Output
     Finally, if the "--output <filename>" option is specified, the resulting
     OTIO will be written to the specified file. The extension of the output
     filename is used to determine the format of the output (e.g. OTIO or any
-    format supported by the adapter plugins.)
+    format supported by the adapter plugins.) If you need to output an older
+    schema version, see the --downgrade option.
 """.strip(),
         epilog="""Examples:
 
@@ -209,11 +238,10 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
 
     # Input...
     parser.add_argument(
-        "-i",
         "--input",
+        "-i",
         type=str,
         nargs='+',
-        required=True,
         metavar='PATH(s)',
         help="""Input file path(s). All formats supported by adapter plugins
         are supported. Use '-' to read OTIO from standard input."""
@@ -221,14 +249,14 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
 
     # Filter...
     parser.add_argument(
-        "-v",
         "--video-only",
+        "-v",
         action='store_true',
         help="Output only video tracks"
     )
     parser.add_argument(
-        "-a",
         "--audio-only",
+        "-a",
         action='store_true',
         help="Output only audio tracks"
     )
@@ -259,7 +287,8 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
         type=str,
         nargs='+',
         metavar='REGEX(es)',
-        help="Output only clips with names matching the given regex"
+        help="""Output only clips with names matching the given
+        regular expression pattern (e.g. '[Ii]nterview [0-9]+')"""
     )
     parser.add_argument(
         "--remove-transitions",
@@ -267,21 +296,23 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
         help="Remove all transitions"
     )
     parser.add_argument(
-        "-t",
         "--trim",
+        "-t",
         type=str,
         nargs=2,
         metavar=('START', 'END'),
-        help="Trim from <start> to <end> as HH:MM:SS:FF timecode or seconds"
+        help="""Trim from START to END, each specified as seconds or
+        HH:MM:SS:FF timecode (matching the timeline's rate)"""
     )
 
     # Combine...
     parser.add_argument(
-        "-f",
         "--flatten",
+        "-f",
         choices=['video', 'audio', 'all'],
         metavar='TYPE',
-        help="Flatten multiple tracks into one."
+        help="""Flatten multiple tracks into one.
+        TYPE must be 'video' or 'audio' or 'all'."""
     )
     parser.add_argument(
         "--keep-flattened-tracks",
@@ -290,14 +321,14 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
         others instead of replacing them."""
     )
     parser.add_argument(
-        "-s",
         "--stack",
+        "-s",
         action='store_true',
         help="Stack multiple input files into one timeline"
     )
     parser.add_argument(
-        "-c",
         "--concat",
+        "-c",
         action='store_true',
         help="Concatenate multiple input files end-to-end into one timeline"
     )
@@ -319,7 +350,15 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
         relink all media references to the copies"""
     )
 
-    # Redact
+    # Remove/Redact
+    parser.add_argument(
+        "--remove-metadata-key",
+        type=str,
+        nargs='+',
+        metavar='KEY(s)',
+        help="""Remove one or more metadata dictionary top-level keys from all
+        objects."""
+    )
     parser.add_argument(
         "--redact",
         action='store_true',
@@ -361,17 +400,43 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
         help="List summary of all markers"
     )
     parser.add_argument(
+        "--verify-ranges",
+        action='store_true',
+        help="""Verify that each clip in a timeline has a source range
+        within the available range of media
+        (acceptable in some use cases, not in others)"""
+    )
+    parser.add_argument(
         "--inspect",
         type=str,
         nargs='+',
         metavar='NAME(s)',
-        help="Inspect details of clips with names matching the given regex"
+        help="""Inspect details of clips with names matching the given regular
+        expression pattern (e.g. 'SFX.*-TEMP')"""
     )
 
     # Output...
     parser.add_argument(
-        "-o",
+        "--downgrade",
+        type=str,
+        metavar='FAMILY:VERSION',
+        help="""Downgrade OTIO schema. Only relevant when --output is used
+        to output an OTIO file. FAMILY:VERSION specifies which schema family
+        and version to use. If FAMILY: is omitted, the default OTIO_CORE: is
+        used. For example `--downgrade OTIO_CORE:0.14.0` is equivalent to
+        `--downgrade 0.14.0`. See
+        https://opentimelineio.readthedocs.io/en/latest/tutorials/versioning-schemas.html
+        for details."""
+    )
+    parser.add_argument(
+        "--list-versions",
+        action='store_true',
+        help="""List available versions for the --downgrade option."""
+    )
+
+    parser.add_argument(
         "--output",
+        "-o",
         type=str,
         metavar='PATH',
         help="""Output file. All formats supported by adapter plugins
@@ -379,6 +444,10 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
     )
 
     args = parser.parse_args()
+
+    # At least one of these must be specified
+    if not any([args.input, args.list_versions]):
+        parser.error("Must specify at least one of --input or --list-versions.")
 
     # Some options cannot be combined.
 
@@ -390,6 +459,9 @@ otiotool -i playlist.otio --only-audio --list-tracks --inspect "Interview"
 
     if args.keep_flattened_tracks and not args.flatten:
         parser.error("Cannot use --keep-flattened-tracks without also using --flatten.")
+
+    if args.input and args.list_versions:
+        parser.error("Cannot combine --input and --list-versions.")
 
     return args
 
@@ -578,6 +650,26 @@ def trim_timeline(start, end, timeline):
     ]
 
 
+def remove_metadata_key(timeline, key):
+    def rem(d):
+        if key in d:
+            del d[key]
+
+    rem(timeline.metadata)
+    for child in [timeline.tracks] + list(timeline.find_children()):
+        rem(child.metadata)
+        if hasattr(child, 'markers'):
+            for marker in child.markers:
+                rem(marker.metadata)
+        if hasattr(child, 'effects'):
+            for effect in child.effects:
+                rem(effect.metadata)
+        if hasattr(child, 'media_reference'):
+            media_reference = child.media_reference
+            if media_reference:
+                rem(media_reference.metadata)
+
+
 # Used only within _counter() to keep track of object indexes
 __counters = {}
 
@@ -619,6 +711,7 @@ def redact_timeline(timeline):
                 has_target_url = hasattr(media_reference, 'target_url')
                 if has_target_url and media_reference.target_url:
                     media_reference.target_url = f"URL #{counter}"
+                media_reference.name = f"{media_reference.schema_name()} #{counter}"
                 media_reference.metadata.clear()
 
 
@@ -768,7 +861,7 @@ def inspect_timelines(name_regex, timeline):
 
 
 def summarize_timeline(list_tracks, list_clips, list_media, verify_media,
-                       list_markers, timeline):
+                       list_markers, verify_ranges, timeline):
     """Print a summary of a timeline, optionally listing the tracks, clips, media,
     and/or markers inside it."""
     print("TIMELINE:", timeline.name)
@@ -777,8 +870,30 @@ def summarize_timeline(list_tracks, list_clips, list_media, verify_media,
             if list_tracks:
                 print(f"TRACK: {child.name} ({child.kind})")
         if isinstance(child, otio.schema.Clip):
-            if list_clips:
-                print("  CLIP:", child.name)
+            if list_clips or verify_ranges:
+                if verify_ranges:
+                    range_msg = ""
+                    try:
+                        source = child.source_range
+                        available = child.available_range()
+
+                        # contains() uses end_time_exclusive(),
+                        # does not handle case when
+                        # the end of the source range
+                        # meets available range exactly
+                        available_start = available.start_time
+                        available_end = available.end_time_inclusive()
+                        src_start = source.start_time
+                        src_end = source.end_time_inclusive()
+                        if src_start < available_start or available_end < src_end:
+                            range_msg = "SOURCE MEDIA OUT OF BOUNDS"
+                        else:
+                            range_msg = "IN BOUNDS"
+                    except Exception:  # available range is, well, unavailable
+                        pass
+                    print("  CLIP:", child.name, range_msg)
+                else:
+                    print("  CLIP:", child.name)
             if list_media or verify_media:
                 try:
                     url = child.media_reference.target_url

@@ -38,7 +38,8 @@ public:
         std::string const&   name         = std::string(),
         TimeRange const&     marked_range = TimeRange(),
         std::string const&   color        = Color::green,
-        AnyDictionary const& metadata     = AnyDictionary());
+        AnyDictionary const& metadata     = AnyDictionary(),
+        std::string const&   comment      = std::string());
 
     std::string color() const noexcept { return _color; }
 
@@ -51,15 +52,20 @@ public:
         _marked_range = marked_range;
     }
 
+    std::string comment() const noexcept { return _comment; }
+
+    void set_comment(std::string const& comment) { _comment = comment; }
+
 protected:
     virtual ~Marker();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     std::string _color;
     TimeRange   _marked_range;
+    std::string _comment;
 };
 
 }} // namespace opentimelineio::OPENTIMELINEIO_VERSION

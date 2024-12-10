@@ -36,9 +36,10 @@ public:
         int                      frame_zero_padding = 0,
         MissingFramePolicy const missing_frame_policy =
             MissingFramePolicy::error,
-        optional<TimeRange> const&    available_range        = nullopt,
-        AnyDictionary const&          metadata               = AnyDictionary(),
-        optional<Imath::Box2d> const& available_image_bounds = nullopt);
+        std::optional<TimeRange> const& available_range = std::nullopt,
+        AnyDictionary const&            metadata        = AnyDictionary(),
+        std::optional<IMATH_NAMESPACE::Box2d> const& available_image_bounds =
+            std::nullopt);
 
     std::string target_url_base() const noexcept { return _target_url_base; }
 
@@ -111,8 +112,8 @@ public:
 protected:
     virtual ~ImageSequenceReference();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     std::string        _target_url_base;

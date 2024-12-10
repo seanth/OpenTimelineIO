@@ -22,7 +22,8 @@ public:
     Effect(
         std::string const&   name        = std::string(),
         std::string const&   effect_name = std::string(),
-        AnyDictionary const& metadata    = AnyDictionary());
+        AnyDictionary const& metadata    = AnyDictionary(),
+        bool                 enabled     = true);
 
     std::string effect_name() const noexcept { return _effect_name; }
 
@@ -31,14 +32,19 @@ public:
         _effect_name = effect_name;
     }
 
+    bool enabled() const { return _enabled; };
+
+    void set_enabled(bool enabled) { _enabled = enabled; }  
+
 protected:
     virtual ~Effect();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     std::string _effect_name;
+    bool        _enabled;
 };
 
 }} // namespace opentimelineio::OPENTIMELINEIO_VERSION

@@ -144,6 +144,7 @@ parameters:
 
 parameters:
 - *effect_name*
+- *enabled*
 - *metadata*
 - *name*
 
@@ -160,6 +161,7 @@ parameters:
 
 parameters:
 - *effect_name*
+- *enabled*
 - *metadata*
 - *name*
 - *time_scalar*
@@ -204,6 +206,7 @@ parameters:
 
 parameters:
 - *effect_name*
+- *enabled*
 - *metadata*
 - *name*
 - *time_scalar*
@@ -212,6 +215,7 @@ parameters:
 
 parameters:
 - *color*
+- *comment*
 - *marked_range*
 - *metadata*
 - *name*
@@ -244,6 +248,7 @@ parameters:
 
 parameters:
 - *effect_name*
+- *enabled*
 - *metadata*
 - *name*
 

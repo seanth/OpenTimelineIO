@@ -9,7 +9,7 @@ import os
 import opentimelineio as otio
 
 SAMPLE_DATA_DIR = os.path.join(os.path.dirname(__file__), "sample_data")
-SCREENING_EXAMPLE_PATH = os.path.join(SAMPLE_DATA_DIR, "screening_example.edl")
+SCREENING_EXAMPLE_PATH = os.path.join(SAMPLE_DATA_DIR, "screening_example.otio")
 MEDIA_EXAMPLE_PATH_REL = os.path.relpath(
     os.path.join(
         os.path.dirname(__file__),
@@ -32,6 +32,19 @@ MEDIA_EXAMPLE_PATH_URL_ABS = otio.url_utils.url_from_filepath(
     MEDIA_EXAMPLE_PATH_ABS
 )
 
+WINDOWS_ENCODED_URL = "file://host/S%3a/path/file.ext"
+WINDOWS_DRIVE_URL = "file://S:/path/file.ext"
+WINDOWS_DRIVE_PATH = "S:/path/file.ext"
+
+WINDOWS_ENCODED_UNC_URL = "file://unc/path/sub%20dir/file.ext"
+WINDOWS_UNC_URL = "file://unc/path/sub dir/file.ext"
+WINDOWS_UNC_PATH = "//unc/path/sub dir/file.ext"
+
+POSIX_LOCALHOST_URL = "file://localhost/path/sub dir/file.ext"
+POSIX_ENCODED_URL = "file:///path/sub%20dir/file.ext"
+POSIX_URL = "file:///path/sub dir/file.ext"
+POSIX_PATH = "/path/sub dir/file.ext"
+
 
 class TestConversions(unittest.TestCase):
     def test_roundtrip_abs(self):
@@ -50,6 +63,21 @@ class TestConversions(unittest.TestCase):
 
         # should have reconstructed it by this point
         self.assertEqual(os.path.normpath(result), MEDIA_EXAMPLE_PATH_REL)
+
+    def test_windows_urls(self):
+        for url in (WINDOWS_ENCODED_URL, WINDOWS_DRIVE_URL):
+            processed_url = otio.url_utils.filepath_from_url(url)
+            self.assertEqual(processed_url, WINDOWS_DRIVE_PATH)
+
+    def test_windows_unc_urls(self):
+        for url in (WINDOWS_ENCODED_UNC_URL, WINDOWS_UNC_URL):
+            processed_url = otio.url_utils.filepath_from_url(url)
+            self.assertEqual(processed_url, WINDOWS_UNC_PATH)
+
+    def test_posix_urls(self):
+        for url in (POSIX_ENCODED_URL, POSIX_URL, POSIX_LOCALHOST_URL):
+            processed_url = otio.url_utils.filepath_from_url(url)
+            self.assertEqual(processed_url, POSIX_PATH)
 
 
 if __name__ == "__main__":

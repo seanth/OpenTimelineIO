@@ -20,12 +20,13 @@ public:
     using Parent = MediaReference;
 
     GeneratorReference(
-        std::string const&            name                   = std::string(),
-        std::string const&            generator_kind         = std::string(),
-        optional<TimeRange> const&    available_range        = nullopt,
-        AnyDictionary const&          parameters             = AnyDictionary(),
-        AnyDictionary const&          metadata               = AnyDictionary(),
-        optional<Imath::Box2d> const& available_image_bounds = nullopt);
+        std::string const&              name            = std::string(),
+        std::string const&              generator_kind  = std::string(),
+        std::optional<TimeRange> const& available_range = std::nullopt,
+        AnyDictionary const&            parameters      = AnyDictionary(),
+        AnyDictionary const&            metadata        = AnyDictionary(),
+        std::optional<IMATH_NAMESPACE::Box2d> const& available_image_bounds =
+            std::nullopt);
 
     std::string generator_kind() const noexcept { return _generator_kind; }
 
@@ -41,8 +42,8 @@ public:
 protected:
     virtual ~GeneratorReference();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     std::string   _generator_kind;

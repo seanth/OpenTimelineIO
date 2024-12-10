@@ -23,11 +23,13 @@ public:
     using Parent = Item;
 
     Clip(
-        std::string const&         name               = std::string(),
-        MediaReference*            media_reference    = nullptr,
-        optional<TimeRange> const& source_range       = nullopt,
-        AnyDictionary const&       metadata           = AnyDictionary(),
-        std::string const& active_media_reference_key = default_media_key);
+        std::string const&              name            = std::string(),
+        MediaReference*                 media_reference = nullptr,
+        std::optional<TimeRange> const& source_range    = std::nullopt,
+        AnyDictionary const&            metadata        = AnyDictionary(),
+        std::vector<Effect*> const& effects             = std::vector<Effect*>(),
+        std::vector<Marker*> const& markers             = std::vector<Marker*>(),
+        std::string const& active_media_reference_key   = default_media_key);
 
     void            set_media_reference(MediaReference* media_reference);
     MediaReference* media_reference() const noexcept;
@@ -45,17 +47,17 @@ public:
                std::string const& new_active_key,
                ErrorStatus*       error_status = nullptr) noexcept;
 
-    virtual TimeRange
-    available_range(ErrorStatus* error_status = nullptr) const;
+    TimeRange
+    available_range(ErrorStatus* error_status = nullptr) const override;
 
-    virtual optional<Imath::Box2d>
-    available_image_bounds(ErrorStatus* error_status) const;
+    std::optional<IMATH_NAMESPACE::Box2d>
+    available_image_bounds(ErrorStatus* error_status) const override;
 
 protected:
     virtual ~Clip();
 
-    virtual bool read_from(Reader&);
-    virtual void write_to(Writer&) const;
+    bool read_from(Reader&) override;
+    void write_to(Writer&) const override;
 
 private:
     template <typename MediaRefMap>
